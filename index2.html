@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام الاستعلام عن لجنة الاختبار</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --primary:#119ca8;
+      --primary2:#38b77b;
+      --dark:#075f6d;
+      --text:#12343b;
+      --muted:#6f8790;
+      --line:#d9f1f2;
+      --danger:#b42318;
+      --success:#087f5b;
+      --warning:#fff3c4;
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{min-height:100%}
+
+    body{
+      margin:0;
+      font-family:"Cairo",Tahoma,Arial,sans-serif;
+      direction:rtl;
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 12% 16%, rgba(56,183,123,.18), transparent 27%),
+        radial-gradient(circle at 88% 10%, rgba(17,156,168,.20), transparent 30%),
+        linear-gradient(135deg,#f4fbfb 0%,#ffffff 48%,#edfafa 100%);
+    }
+
+    body::before,
+    body::after{
+      content:"";
+      position:fixed;
+      width:430px;
+      height:430px;
+      border-radius:999px;
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    body::before{
+      top:-210px;
+      right:-210px;
+      background:radial-gradient(circle,rgba(56,183,123,.22),transparent 68%);
+    }
+
+    body::after{
+      left:-220px;
+      bottom:-220px;
+      background:radial-gradient(circle,rgba(17,156,168,.20),transparent 68%);
+    }
+
+    .page{width:min(100%,590px);position:relative}
+
+    .page::before{
+      content:"";
+      position:absolute;
+      inset:-18px;
+      border-radius:42px;
+      background:linear-gradient(135deg,rgba(17,156,168,.18),rgba(56,183,123,.12));
+      filter:blur(12px);
+      z-index:-1;
+    }
+
+    .main-card{
+      position:relative;
+      overflow:hidden;
+      border-radius:34px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(217,241,242,.95);
+      box-shadow:0 30px 90px rgba(7,95,109,.16);
+      backdrop-filter:blur(14px);
+    }
+
+    .main-card::before{
+      content:"";
+      position:absolute;
+      top:0;
+      right:0;
+      left:0;
+      height:8px;
+      background:linear-gradient(90deg,var(--primary),var(--primary2),var(--primary));
+    }
+
+    .hero{
+      position:relative;
+      padding:36px 30px 22px;
+      text-align:center;
+      overflow:hidden;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      width:370px;
+      height:370px;
+      top:-258px;
+      right:50%;
+      transform:translateX(50%);
+      border-radius:999px;
+      background:linear-gradient(135deg,rgba(17,156,168,.11),rgba(56,183,123,.11));
+      z-index:0;
+    }
+
+    .logo-box,.school-name,.title-pill,.subtitle{position:relative;z-index:1}
+
+    .logo-box{
+      width:220px;
+      min-height:82px;
+      margin:0 auto 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .logo-box img{width:100%;max-height:86px;object-fit:contain;display:block}
+
+    .school-name{
+      margin:8px 0 18px;
+      font-size:21px;
+      font-weight:900;
+      color:#263f46;
+      letter-spacing:-.2px;
+    }
+
+    .title-pill{
+      width:fit-content;
+      max-width:100%;
+      margin:0 auto 12px;
+      padding:14px 28px 15px;
+      border-radius:999px;
+      color:var(--dark);
+      font-size:22px;
+      line-height:1.65;
+      font-weight:900;
+      background:linear-gradient(180deg,#f5f8f8,#ecf3f3);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 12px 26px rgba(7,95,109,.08);
+    }
+
+    .subtitle{margin:0;color:var(--muted);font-size:14px;font-weight:700}
+
+    .search-section{padding:8px 30px 30px}
+
+    .search-card{
+      border:1px solid var(--line);
+      border-radius:28px;
+      padding:22px;
+      background:linear-gradient(135deg,#f8fbfb,#eef8f9);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.86);
+    }
+
+    .search-label{display:block;margin:0 0 12px;color:#31535c;font-size:15px;font-weight:900}
+
+    .search-row{display:grid;grid-template-columns:1fr 130px;gap:10px;align-items:center}
+
+    .input-box input{
+      width:100%;
+      height:56px;
+      border:1px solid #cdebed;
+      border-radius:18px;
+      outline:none;
+      padding:0 18px;
+      background:#fff;
+      color:#1f2933;
+      font-family:"Cairo",Tahoma,Arial,sans-serif;
+      font-size:22px;
+      font-weight:800;
+      text-align:center;
+      direction:ltr;
+      box-shadow:0 10px 24px rgba(7,95,109,.06);
+      transition:.2s ease;
+    }
+
+    .input-box input:focus{
+      border-color:#81dbe2;
+      box-shadow:0 0 0 4px rgba(17,156,168,.11),0 10px 24px rgba(7,95,109,.07);
+    }
+
+    .search-btn{
+      height:56px;
+      border:0;
+      border-radius:18px;
+      cursor:pointer;
+      font-family:"Cairo",Tahoma,Arial,sans-serif;
+      font-size:16px;
+      font-weight:900;
+      color:#fff;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      box-shadow:0 14px 26px rgba(17,156,168,.25);
+      transition:.2s ease;
+    }
+
+    .search-btn:hover{transform:translateY(-1px);box-shadow:0 18px 34px rgba(17,156,168,.30)}
+    .search-btn:active{transform:translateY(0)}
+    .search-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+
+    .message{
+      min-height:27px;
+      margin:13px 2px 0;
+      text-align:center;
+      font-size:14px;
+      font-weight:800;
+      color:var(--muted);
+      line-height:1.8;
+    }
+
+    .message.success{color:var(--success)}
+    .message.danger{color:var(--danger)}
+
+    .hint{
+      margin:14px auto 0;
+      width:fit-content;
+      max-width:100%;
+      padding:9px 16px;
+      border-radius:999px;
+      background:var(--warning);
+      color:#497b80;
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .result-card{
+      display:none;
+      margin:18px 30px 34px;
+      border:1px solid var(--line);
+      border-radius:30px;
+      background:#fff;
+      overflow:hidden;
+      box-shadow:0 18px 42px rgba(7,95,109,.09);
+      animation:showCard .32s ease both;
+    }
+
+    @keyframes showCard{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    .result-head{
+      padding:18px 20px;
+      background:linear-gradient(135deg,rgba(17,156,168,.11),rgba(56,183,123,.11));
+      text-align:center;
+      border-bottom:1px solid var(--line);
+    }
+
+    .result-head .small{margin-bottom:3px;color:var(--muted);font-size:13px;font-weight:800}
+
+    .student-name{color:var(--dark);font-size:24px;line-height:1.55;font-weight:900;word-break:break-word}
+
+    .rows{padding:16px;display:grid;gap:9px}
+
+    .data-row{
+      min-height:48px;
+      display:grid;
+      grid-template-columns:120px 1fr;
+      border:1px solid #d7f0f2;
+      border-radius:17px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .data-label{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:9px 10px;
+      background:#b8edf1;
+      color:#226d77;
+      font-size:14px;
+      font-weight:900;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    .data-value{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding:9px 14px;
+      color:#183f47;
+      font-size:16px;
+      font-weight:800;
+      line-height:1.6;
+      word-break:break-word;
+      text-align:right;
+    }
+
+    .footer-note{padding:13px 18px 18px;color:#7d9299;text-align:center;font-size:12px;font-weight:700}
+
+    @media (max-width:560px){
+      body{padding:12px;align-items:flex-start}
+      .hero{padding:30px 18px 20px}
+      .logo-box{width:185px}
+      .school-name{font-size:18px}
+      .title-pill{font-size:19px;padding:12px 20px}
+      .search-section{padding:6px 18px 24px}
+      .search-card{padding:18px;border-radius:24px}
+      .search-row{grid-template-columns:1fr}
+      .search-btn{width:100%}
+      .result-card{margin:14px 18px 30px;border-radius:24px}
+      .student-name{font-size:21px}
+      .data-row{grid-template-columns:104px 1fr}
+      .data-label{font-size:13px}
+      .data-value{font-size:15px;padding-inline:12px}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="main-card" aria-label="نظام الاستعلام عن لجنة الاختبار">
+      <header class="hero">
+        <div class="logo-box">
+          <img src="logomoe.png" alt="شعار وزارة التعليم" onerror="this.style.display='none'" />
+        </div>
+
+        <div id="schoolName" class="school-name">مدرسة النور الابتدائية</div>
+
+        <div class="title-pill">
+          نظام الاستعلام برقم الهوية<br />عن لجنة اختبار الطالبة
+        </div>
+
+        <p class="subtitle">أدخلي رقم السجل المدني لعرض بيانات اللجنة ومقر الاختبار</p>
+      </header>
+
+      <section class="search-section">
+        <div class="search-card">
+          <label class="search-label" for="civilId">رقم السجل المدني / رقم الهوية</label>
+          <div class="search-row">
+            <div class="input-box">
+              <input id="civilId" type="text" inputmode="numeric" autocomplete="off" placeholder="مثال: 1234567890" />
+            </div>
+            <button id="searchBtn" class="search-btn" type="button" disabled>استعلام</button>
+          </div>
+
+          <div id="message" class="message">جاري تجهيز البيانات...</div>
+          <div class="hint">يرجى كتابة الأرقام باللغة الإنجليزية</div>
+        </div>
+      </section>
+
+      <section id="resultCard" class="result-card" aria-live="polite">
+        <div class="result-head">
+          <div class="small">بيانات لجنة الاختبار</div>
+          <div id="studentName" class="student-name">—</div>
+        </div>
+
+        <div class="rows">
+          <div class="data-row"><div class="data-label">رقم الهوية</div><div id="studentId" class="data-value">—</div></div>
+          <div class="data-row"><div class="data-label">الصف</div><div id="studentGrade" class="data-value">—</div></div>
+          <div class="data-row"><div class="data-label">القسم</div><div id="studentSection" class="data-value">—</div></div>
+          <div class="data-row"><div class="data-label">رقم الجلوس</div><div id="studentSeat" class="data-value">—</div></div>
+          <div class="data-row"><div class="data-label">اللجنة</div><div id="studentCommittee" class="data-value">—</div></div>
+          <div class="data-row"><div class="data-label">مقر اللجنة</div><div id="studentLocation" class="data-value">—</div></div>
+        </div>
+
+        <div class="footer-note">مع تمنياتنا للجميع بالتوفيق والنجاح</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    var CONFIG = {
+      schoolName: "مدرسة النور الابتدائية",
+      excelPaths: ["st22.xlsx", "./st22.xlsx", "ST22.xlsx", "./ST22.xlsx"]
+    };
+
+    var students = [];
+
+    var columns = {
+      name: ["اسم الطالبة", "اسم الطالب", "اسم الطالب ة", "الطالبة", "الطالب", "الاسم", "name", "student name"],
+      id: ["رقم الهوية", "رقم السجل المدني", "السجل المدني", "الهوية", "رقم الهوية الوطنية", "id", "national id", "civil id"],
+      grade: ["الصف", "المرحلة", "الصف الدراسي", "grade", "class"],
+      section: ["القسم", "الشعبة", "الفصل", "الصف القسم", "section"],
+      seat: ["رقم الجلوس", "رقم المقعد", "رقم الجلوس المقعد", "seat", "seat no", "seat number"],
+      committee: ["اللجنة", "لجنة الاختبار", "اسم اللجنة", "committee"],
+      location: ["مقر اللجنة", "مكان اللجنة", "المقر", "القاعة", "الفصل المخصص", "location", "room"]
+    };
+
+    var arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+    var persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+    var marksToRemove = ["َ","ً","ُ","ٌ","ِ","ٍ","ْ","ّ","ـ"," ","_","-","/",":","."];
+
+    var testRows = [
+      {"اسم الطالبة":"سارة محمد","رقم الهوية":"١٢٣٤٥٦٧٨٩٠","الصف":"السادس","القسم":"أ","رقم الجلوس":"15","اللجنة":"الأولى","مقر اللجنة":"الدور الأول"},
+      {"الاسم":"نورة علي","السجل المدني":"2234567890","الفصل":"ب","المقر":"معمل الحاسب"},
+      {"اسم الطالب":"منى سالم","رقم السجل المدني":"0001234567","لجنة الاختبار":"اللجنة الثالثة","مكان اللجنة":"قاعة 3"}
+    ];
+
+    function select(selector){return document.querySelector(selector)}
+
+    var message = null;
+    var searchBtn = null;
+    var civilIdInput = null;
+    var resultCard = null;
+
+    document.addEventListener("DOMContentLoaded", function(){
+      message = select("#message");
+      searchBtn = select("#searchBtn");
+      civilIdInput = select("#civilId");
+      resultCard = select("#resultCard");
+
+      select("#schoolName").textContent = CONFIG.schoolName;
+      bindEvents();
+      runTests();
+      loadStudents();
+    });
+
+    function bindEvents(){
+      searchBtn.addEventListener("click", searchStudent);
+
+      civilIdInput.addEventListener("keydown", function(event){
+        if(event.key === "Enter") searchStudent();
+      });
+
+      civilIdInput.addEventListener("input", function(){
+        civilIdInput.value = onlyDigits(civilIdInput.value);
+      });
+    }
+
+    async function loadStudents(){
+      setMessage("جاري تجهيز البيانات...", "");
+      searchBtn.disabled = true;
+
+      if(typeof XLSX === "undefined"){
+        setMessage("تعذر تحميل مكتبة قراءة Excel. تأكد من اتصال الإنترنت أو حمّل مكتبة xlsx محلياً.", "danger");
+        return;
+      }
+
+      var loaded = false;
+      var lastStatus = "";
+
+      for(var index = 0; index < CONFIG.excelPaths.length; index++){
+        var path = CONFIG.excelPaths[index];
+
+        try{
+          var response = await fetch(path, {cache:"no-store"});
+
+          if(!response.ok){
+            lastStatus = path + " - HTTP " + response.status;
+            continue;
+          }
+
+          var buffer = await response.arrayBuffer();
+          parseWorkbookBuffer(buffer, path);
+          loaded = true;
+          break;
+        }catch(fetchError){
+          lastStatus = path + " - " + safeError(fetchError);
+        }
+      }
+
+      if(!loaded){
+        searchBtn.disabled = true;
+        var currentProtocol = window.location.protocol;
+        var extra = "";
+
+        if(currentProtocol === "file:"){
+          extra = "";
+        }
+
+        setMessage("" + extra, "danger");
+        console.warn("فشل تحميل ملف Excel:", lastStatus);
+      }
+    }
+
+    function parseWorkbookBuffer(buffer, sourcePath){
+      var workbook = XLSX.read(buffer, {type:"array"});
+      var firstSheetName = workbook.SheetNames[0];
+
+      if(!firstSheetName){
+        throw new Error("ملف Excel لا يحتوي على أوراق عمل");
+      }
+
+      var sheet = workbook.Sheets[firstSheetName];
+      var rows = XLSX.utils.sheet_to_json(sheet, {defval:"", raw:false});
+      students = rows.map(mapStudent).filter(function(student){return student.idNormalized});
+
+      if(students.length === 0){
+        throw new Error("لم يتم العثور على بيانات صالحة داخل ملف Excel");
+      }
+
+      searchBtn.disabled = false;
+      setMessage("تم تجهيز البيانات، يمكنك الآن الاستعلام.", "success");
+      console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "عدد السجلات:", students.length);
+    }
+
+    function mapStudent(row){
+      var student = {};
+
+      Object.keys(columns).forEach(function(field){
+        var key = findColumn(row, columns[field]);
+        student[field] = key ? cleanValue(row[key]) : "";
+      });
+
+      student.idNormalized = onlyDigits(student.id);
+      return student;
+    }
+
+    function findColumn(row, aliases){
+      var keys = Object.keys(row || {});
+      var normalizedAliases = aliases.map(normalizeHeader);
+
+      for(var i = 0; i < keys.length; i++){
+        if(normalizedAliases.indexOf(normalizeHeader(keys[i])) !== -1){
+          return keys[i];
+        }
+      }
+
+      return null;
+    }
+
+    function normalizeHeader(value){
+      var result = String(value === undefined || value === null ? "" : value).trim().toLowerCase();
+
+      marksToRemove.forEach(function(mark){
+        result = result.split(mark).join("");
+      });
+
+      return result;
+    }
+
+    function cleanValue(value){
+      return String(value === undefined || value === null ? "" : value).trim();
+    }
+
+    function normalizeDigits(value){
+      return String(value === undefined || value === null ? "" : value).split("").map(function(char){
+        var arabicIndex = arabicDigits.indexOf(char);
+        if(arabicIndex >= 0) return String(arabicIndex);
+
+        var persianIndex = persianDigits.indexOf(char);
+        if(persianIndex >= 0) return String(persianIndex);
+
+        return char;
+      }).join("");
+    }
+
+    function onlyDigits(value){
+      return normalizeDigits(value).split("").filter(function(char){
+        return char >= "0" && char <= "9";
+      }).join("");
+    }
+
+    function setMessage(text, type){
+      message.textContent = text;
+      message.className = "message " + (type || "");
+    }
+
+    function safeError(error){
+      if(error && error.message) return error.message;
+      return String(error);
+    }
+
+    function searchStudent(){
+      var civilId = onlyDigits(civilIdInput.value);
+
+      if(searchBtn.disabled) return;
+
+      if(!civilId){
+        hideResult();
+        setMessage("يرجى إدخال رقم السجل المدني أولاً.", "danger");
+        civilIdInput.focus();
+        return;
+      }
+
+      var student = students.find(function(item){return item.idNormalized === civilId});
+
+      if(!student){
+        hideResult();
+        setMessage("لا توجد بيانات مطابقة لهذا الرقم.", "danger");
+        return;
+      }
+
+      showResult(student);
+      setMessage("تم العثور على بيانات الطالبة.", "success");
+    }
+
+    function showResult(student){
+      select("#studentName").textContent = student.name || "—";
+      select("#studentId").textContent = student.id || "—";
+      select("#studentGrade").textContent = student.grade || "—";
+      select("#studentSection").textContent = student.section || "—";
+      select("#studentSeat").textContent = student.seat || "—";
+      select("#studentCommittee").textContent = student.committee || "—";
+      select("#studentLocation").textContent = student.location || "—";
+      resultCard.style.display = "block";
+    }
+
+    function hideResult(){
+      resultCard.style.display = "none";
+    }
+
+    function runTests(){
+      var tests = [];
+      tests.push({name:"تحويل الأرقام العربية", pass:onlyDigits("١٢٣٤٥٦٧٨٩٠") === "1234567890"});
+      tests.push({name:"تحويل الأرقام الفارسية", pass:onlyDigits("۱۲۳۴۵۶۷۸۹۰") === "1234567890"});
+      tests.push({name:"الاحتفاظ بالأصفار اليسارية", pass:onlyDigits("0001234567") === "0001234567"});
+
+      var first = mapStudent(testRows[0]);
+      tests.push({name:"قراءة عمود رقم الهوية", pass:first.idNormalized === "1234567890" && first.name === "سارة محمد"});
+
+      var second = mapStudent(testRows[1]);
+      tests.push({name:"قراءة بدائل أسماء الأعمدة", pass:second.idNormalized === "2234567890" && second.location === "معمل الحاسب"});
+
+      var third = mapStudent(testRows[2]);
+      tests.push({name:"قراءة رقم يبدأ بصفر", pass:third.idNormalized === "0001234567" && third.committee === "اللجنة الثالثة"});
+
+      var failed = tests.filter(function(test){return !test.pass});
+      if(failed.length){
+        console.error("اختبارات فاشلة:", failed);
+      }else{
+        console.info("تم اجتياز اختبارات القراءة الأساسية:", tests.map(function(test){return test.name}));
+      }
+    }
+  </script>
+</body>
+</html>
