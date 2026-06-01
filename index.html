@@ -246,6 +246,24 @@
       font-weight:900;
     }
 
+    .credits-card{
+      margin:0 30px 30px;
+      padding:14px 18px;
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:rgba(255,255,255,.78);
+      color:#6f8790;
+      text-align:center;
+      font-size:13px;
+      font-weight:600;
+      line-height:1.9;
+    }
+
+    .credits-card div:first-child{
+      color:#5f7a82;
+      font-weight:700;
+    }
+
     .result-card{
       display:none;
       margin:18px 30px 34px;
@@ -330,6 +348,7 @@
       .search-card{padding:18px;border-radius:24px}
       .search-row{grid-template-columns:1fr}
       .search-btn{width:100%}
+      .credits-card{margin:0 18px 24px;font-size:12px}
       .result-card{margin:14px 18px 30px;border-radius:24px}
       .student-name{font-size:21px}
       .data-row{grid-template-columns:104px 1fr}
@@ -375,6 +394,12 @@
         </div>
       </section>
 
+      <section class="credits-card" aria-label="بيانات الإعداد">
+        <div>إعداد الأستاذة فاطمة ناجي عبدالعزيز</div>
+        <div>فكرة الأستاذة عزة طلميس</div>
+        <div>مديرة المدرسة الأستاذة حنان عبدالله رمزي</div>
+      </section>
+
       <section id="resultCard" class="result-card" aria-live="polite">
         <div class="result-head">
           <div class="small">بيانات لجنة الاختبار</div>
@@ -392,9 +417,6 @@
 
         <div class="footer-note">
           <div>مع تمنياتنا للجميع بالتوفيق والنجاح</div>
-          <div>إعداد الأستاذة فاطمة ناجي عبدالعزيز</div>
-          <div>فكرة الأستاذة عزة طلميس</div>
-          <div>مديرة المدرسة الأستاذة حنان عبدالله رمزي</div>
         </div>
       </section>
     </section>
@@ -410,8 +432,8 @@
     var students = [];
 
     var columns = {
-      name: ["اسم الطالبة", "اسم الطالب", "اسم الطالب ة", "الطالبة", "الطالب", "الاسم", "name", "student name"],
-      id: ["رقم الهوية", "رقم السجل المدني", "السجل المدني", "الهوية", "رقم الهوية الوطنية", "id", "national id", "civil id"],
+      name: ["اسم الطالبة", "اسم الطالبه", "اسم الطالب", "اسم الطالب ة", "الطالبة", "الطالبه", "الطالب", "الاسم", "name", "student name"],
+      id: ["رقم الهوية", "رقم الهويه", "رقم السجل المدني", "السجل المدني", "الهوية", "الهويه", "رقم الهوية الوطنية", "id", "national id", "civil id"],
       grade: ["الصف", "المرحلة", "الصف الدراسي", "grade", "class"],
       section: ["القسم", "الشعبة", "الفصل", "الصف القسم", "section"],
       seat: ["رقم الجلوس", "رقم المقعد", "رقم الجلوس المقعد", "seat", "seat no", "seat number"],
@@ -427,6 +449,13 @@
       {"اسم الطالبة":"سارة محمد","رقم الهوية":"١٢٣٤٥٦٧٨٩٠","الصف":"السادس","القسم":"أ","رقم الجلوس":"15","اللجنة":"الأولى","مقر اللجنة":"الدور الأول"},
       {"الاسم":"نورة علي","السجل المدني":"2234567890","الفصل":"ب","المقر":"معمل الحاسب"},
       {"اسم الطالب":"منى سالم","رقم السجل المدني":"0001234567","لجنة الاختبار":"اللجنة الثالثة","مكان اللجنة":"قاعة 3"}
+    ];
+
+    var testMatrixWithTitleRows = [
+      ["", "", ""],
+      ["قاعدة بيانات لجان الطالبات", "", ""],
+      ["الرقم", "رقم الهويه", "اسم الطالبة ", "الصف", "القسم ", "رقم الجلوس", "اللجنة", "مقر اللجنة"],
+      ["1", "2316856059", "الاء خلف الله حسين التجاني", "الأول الثانوي", "السنة المشتركة", "111450001", "اللجنة الأولى", "أول ثانوي [ أ ]"]
     ];
 
     function select(selector){return document.querySelector(selector)}
@@ -464,13 +493,13 @@
       setMessage("جاري تجهيز البيانات...", "");
       searchBtn.disabled = true;
 
-      if(loadStudentsFromJsData()){
-        return;
-      }
-
       if(window.location.protocol === "file:"){
-        setMessage("الملف st.xlsx موجود، لكن المتصفح يمنع قراءته عند فتح الصفحة مباشرة من الجهاز. للتشغيل بالنقر المباشر استخدم ملف st-data.js، أو شغّل الصفحة عبر Live Server لقراءة st.xlsx.", "danger");
-        console.warn("الصفحة تعمل عبر file://. لا يمكن قراءة st.xlsx تلقائياً من القرص المحلي باستخدام fetch. الحل: Live Server أو st-data.js.");
+        if(loadStudentsFromJsData()){
+          return;
+        }
+
+        setMessage("لا يمكن قراءة ملف Excel مباشرة عند فتح الصفحة بالنقر من الجهاز. شغّل الصفحة عبر Live Server أو GitHub Pages ليقرأ الموقع نفس ملف st.xlsx بدون تحويل.", "danger");
+        console.warn("الصفحة تعمل عبر file://. قراءة st.xlsx تحتاج تشغيل الموقع عبر http أو https.");
         return;
       }
 
@@ -500,6 +529,10 @@
         }catch(fetchError){
           lastStatus = path + " - " + safeError(fetchError);
         }
+      }
+
+      if(!loaded && loadStudentsFromJsData()){
+        return;
       }
 
       if(!loaded){
@@ -532,23 +565,105 @@
 
     function parseWorkbookBuffer(buffer, sourcePath){
       var workbook = XLSX.read(buffer, {type:"array"});
-      var firstSheetName = workbook.SheetNames[0];
+      var parsed = parseBestWorksheet(workbook);
 
-      if(!firstSheetName){
-        throw new Error("ملف Excel لا يحتوي على أوراق عمل");
-      }
-
-      var sheet = workbook.Sheets[firstSheetName];
-      var rows = XLSX.utils.sheet_to_json(sheet, {defval:"", raw:false});
-      students = rows.map(mapStudent).filter(function(student){return student.idNormalized});
+      students = parsed.rows.map(mapStudent).filter(function(student){
+        return student.idNormalized;
+      });
 
       if(students.length === 0){
-        throw new Error("لم يتم العثور على بيانات صالحة داخل ملف Excel");
+        throw new Error("تم تحميل ملف Excel، لكن لم يتم العثور على صف عناوين صحيح أو بيانات هوية صالحة");
       }
 
       searchBtn.disabled = false;
       setMessage("تم تجهيز البيانات، يمكنك الآن الاستعلام.", "success");
-      console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "عدد السجلات:", students.length);
+      console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "الورقة:", parsed.sheetName, "صف العناوين:", parsed.headerRowNumber, "عدد السجلات:", students.length);
+      console.info("أول هوية مقروءة للتجربة:", students[0].idNormalized);
+    }
+
+    function parseBestWorksheet(workbook){
+      var best = null;
+
+      workbook.SheetNames.forEach(function(sheetName){
+        var sheet = workbook.Sheets[sheetName];
+        var matrix = XLSX.utils.sheet_to_json(sheet, {header:1, defval:"", raw:false});
+        var parsed = parseRowsWithDynamicHeader(matrix, sheetName);
+
+        if(parsed && (!best || parsed.rows.length > best.rows.length)){
+          best = parsed;
+        }
+      });
+
+      if(!best){
+        throw new Error("لم يتم العثور على صف عناوين يحتوي على رقم الهوية واسم الطالبة داخل ملف Excel");
+      }
+
+      return best;
+    }
+
+    function parseRowsWithDynamicHeader(matrix, sheetName){
+      var headerIndex = findHeaderRowIndex(matrix);
+
+      if(headerIndex === -1){
+        return null;
+      }
+
+      var headers = matrix[headerIndex].map(function(value){
+        return cleanValue(value);
+      });
+
+      var rows = [];
+
+      for(var rowIndex = headerIndex + 1; rowIndex < matrix.length; rowIndex++){
+        var row = matrix[rowIndex] || [];
+        var objectRow = {};
+        var hasAnyValue = false;
+
+        for(var colIndex = 0; colIndex < headers.length; colIndex++){
+          var header = headers[colIndex];
+          var value = cleanValue(row[colIndex]);
+
+          if(header){
+            objectRow[header] = value;
+          }
+
+          if(value){
+            hasAnyValue = true;
+          }
+        }
+
+        if(hasAnyValue){
+          rows.push(objectRow);
+        }
+      }
+
+      return {
+        sheetName: sheetName,
+        headerRowNumber: headerIndex + 1,
+        rows: rows
+      };
+    }
+
+    function findHeaderRowIndex(matrix){
+      for(var rowIndex = 0; rowIndex < matrix.length; rowIndex++){
+        var row = matrix[rowIndex] || [];
+        var normalizedCells = row.map(normalizeHeader);
+        var hasIdColumn = normalizedCells.some(function(cell){
+          return columns.id.map(normalizeHeader).indexOf(cell) !== -1;
+        });
+        var hasNameColumn = normalizedCells.some(function(cell){
+          return columns.name.map(normalizeHeader).indexOf(cell) !== -1;
+        });
+        var hasCommitteeColumn = normalizedCells.some(function(cell){
+          return columns.committee.map(normalizeHeader).indexOf(cell) !== -1;
+        });
+
+        if(hasIdColumn && (hasNameColumn || hasCommitteeColumn)){
+          return rowIndex;
+        }
+      }
+
+      return -1;
     }
 
     function mapStudent(row){
@@ -671,6 +786,10 @@
 
       var third = mapStudent(testRows[2]);
       tests.push({name:"قراءة رقم يبدأ بصفر", pass:third.idNormalized === "0001234567" && third.committee === "اللجنة الثالثة"});
+
+      var parsedMatrix = parseRowsWithDynamicHeader(testMatrixWithTitleRows, "اختبار");
+      var matrixStudent = parsedMatrix ? mapStudent(parsedMatrix.rows[0]) : null;
+      tests.push({name:"قراءة ملف Excel يبدأ بعنوان قبل صف الأعمدة", pass:!!matrixStudent && parsedMatrix.headerRowNumber === 3 && matrixStudent.idNormalized === "2316856059" && matrixStudent.name === "الاء خلف الله حسين التجاني"});
 
       var failed = tests.filter(function(test){return !test.pass});
       if(failed.length){
