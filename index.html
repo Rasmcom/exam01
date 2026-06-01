@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  <script src="st-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -22,6 +23,7 @@
       --danger:#b42318;
       --success:#087f5b;
       --warning:#fff3c4;
+      --label-soft:#e8f4f2;
     }
 
     *{box-sizing:border-box}
@@ -135,10 +137,17 @@
 
     .school-name{
       margin:8px 0 18px;
-      font-size:21px;
-      font-weight:900;
-      color:#263f46;
-      letter-spacing:-.2px;
+      color:#526a72;
+      font-size:15px;
+      font-weight:500;
+      line-height:1.85;
+      letter-spacing:0;
+    }
+
+    .school-name div:last-child{
+      color:#31535c;
+      font-size:16px;
+      font-weight:600;
     }
 
     .title-pill{
@@ -278,7 +287,7 @@
       align-items:center;
       justify-content:center;
       padding:9px 10px;
-      background:#b8edf1;
+      background:var(--label-soft);
       color:#226d77;
       font-size:14px;
       font-weight:900;
@@ -299,13 +308,23 @@
       text-align:right;
     }
 
-    .footer-note{padding:13px 18px 18px;color:#7d9299;text-align:center;font-size:12px;font-weight:700}
+    .footer-note{
+      padding:14px 18px 20px;
+      color:#7d9299;
+      text-align:center;
+      font-size:13px;
+      font-weight:600;
+      line-height:1.9;
+    }
+
+    .footer-note div:first-child{font-weight:700;color:#5f7a82}
 
     @media (max-width:560px){
       body{padding:12px;align-items:flex-start}
       .hero{padding:30px 18px 20px}
       .logo-box{width:185px}
-      .school-name{font-size:18px}
+      .school-name{font-size:13px;line-height:1.75}
+      .school-name div:last-child{font-size:14px}
       .title-pill{font-size:19px;padding:12px 20px}
       .search-section{padding:6px 18px 24px}
       .search-card{padding:18px;border-radius:24px}
@@ -327,7 +346,12 @@
           <img src="logomoe.png" alt="شعار وزارة التعليم" onerror="this.style.display='none'" />
         </div>
 
-        <div id="schoolName" class="school-name">مدرسة النور الابتدائية</div>
+        <div id="schoolName" class="school-name">
+          <div>المملكة العربية السعودية</div>
+          <div>وزارة التعليم</div>
+          <div>الإدارة العامة للتعليم بمنطقة الباحة</div>
+          <div>ثانوية السيدة فاطمة الزهراء بالباحة</div>
+        </div>
 
         <div class="title-pill">
           نظام الاستعلام برقم الهوية<br />عن لجنة اختبار الطالبة
@@ -366,15 +390,21 @@
           <div class="data-row"><div class="data-label">مقر اللجنة</div><div id="studentLocation" class="data-value">—</div></div>
         </div>
 
-        <div class="footer-note">مع تمنياتنا للجميع بالتوفيق والنجاح</div>
+        <div class="footer-note">
+          <div>مع تمنياتنا للجميع بالتوفيق والنجاح</div>
+          <div>إعداد الأستاذة فاطمة ناجي عبدالعزيز</div>
+          <div>فكرة الأستاذة عزة طلميس</div>
+          <div>مديرة المدرسة الأستاذة حنان عبدالله رمزي</div>
+        </div>
       </section>
     </section>
   </main>
 
   <script>
     var CONFIG = {
-      schoolName: "مدرسة النور الابتدائية",
-      excelPaths: ["st.xlsx", "./st.xlsx", "ST.xlsx", "./ST.xlsx"]
+      schoolName: "ثانوية السيدة فاطمة الزهراء بالباحة",
+      excelPaths: ["st.xlsx", "./st.xlsx", "ST.xlsx", "./ST.xlsx"],
+      dataJsFile: "st-data.js"
     };
 
     var students = [];
@@ -412,7 +442,7 @@
       civilIdInput = select("#civilId");
       resultCard = select("#resultCard");
 
-      select("#schoolName").textContent = CONFIG.schoolName;
+      // بيانات الجهة التعليمية مكتوبة ثابتة في واجهة الصفحة.
       bindEvents();
       runTests();
       loadStudents();
@@ -433,6 +463,16 @@
     async function loadStudents(){
       setMessage("جاري تجهيز البيانات...", "");
       searchBtn.disabled = true;
+
+      if(loadStudentsFromJsData()){
+        return;
+      }
+
+      if(window.location.protocol === "file:"){
+        setMessage("الملف st.xlsx موجود، لكن المتصفح يمنع قراءته عند فتح الصفحة مباشرة من الجهاز. للتشغيل بالنقر المباشر استخدم ملف st-data.js، أو شغّل الصفحة عبر Live Server لقراءة st.xlsx.", "danger");
+        console.warn("الصفحة تعمل عبر file://. لا يمكن قراءة st.xlsx تلقائياً من القرص المحلي باستخدام fetch. الحل: Live Server أو st-data.js.");
+        return;
+      }
 
       if(typeof XLSX === "undefined"){
         setMessage("تعذر تحميل مكتبة قراءة Excel. تأكد من اتصال الإنترنت أو حمّل مكتبة xlsx محلياً.", "danger");
@@ -464,16 +504,30 @@
 
       if(!loaded){
         searchBtn.disabled = true;
-        var currentProtocol = window.location.protocol;
-        var extra = "";
-
-        if(currentProtocol === "file:"){
-          extra = " الصفحة مفتوحة مباشرة من الجهاز، لذلك لن يستطيع المتصفح قراءة ملف Excel تلقائياً. شغّلها عبر Live Server أو ارفع المجلد على استضافة.";
-        }
-
-        setMessage("تعذر تجهيز البيانات من ملف st.xlsx. تأكد أن الملف بجانب index.html وأن الاسم مطابق تماماً." + extra, "danger");
+        setMessage("تعذر تجهيز البيانات من ملف st.xlsx. تأكد أن الملف بجانب index.html وأن الاسم مطابق تماماً، وأن الاستضافة تسمح بتحميل ملفات xlsx.", "danger");
         console.warn("فشل تحميل ملف Excel:", lastStatus);
       }
+    }
+
+    function loadStudentsFromJsData(){
+      if(!window.STUDENTS_DATA || !Array.isArray(window.STUDENTS_DATA)){
+        return false;
+      }
+
+      students = window.STUDENTS_DATA.map(mapStudent).filter(function(student){
+        return student.idNormalized;
+      });
+
+      if(students.length === 0){
+        setMessage("تم العثور على ملف st-data.js، لكن لا توجد بيانات صالحة داخله.", "danger");
+        searchBtn.disabled = true;
+        return true;
+      }
+
+      searchBtn.disabled = false;
+      setMessage("تم تجهيز البيانات، يمكنك الآن الاستعلام.", "success");
+      console.info("تم تحميل بيانات الاستعلام من st-data.js. عدد السجلات:", students.length);
+      return true;
     }
 
     function parseWorkbookBuffer(buffer, sourcePath){
