@@ -9,7 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <script src="st-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -426,7 +425,17 @@
     var CONFIG = {
       schoolName: "ثانوية السيدة فاطمة الزهراء بالباحة",
       excelPaths: ["st.xlsx", "./st.xlsx", "ST.xlsx", "./ST.xlsx", "st(1).xlsx", "./st(1).xlsx"],
-      dataJsFile: "st-data.js"
+      databaseSheetName: "القاعده",
+      startRowIndex: 4,
+      columnIndex: {
+        id: 1,
+        name: 2,
+        grade: 3,
+        section: 4,
+        seat: 5,
+        committee: 6,
+        location: 7
+      }
     };
 
     var students = [];
@@ -453,8 +462,9 @@
     ];
 
     var testMatrixWithTitleRows = [
-      ["", "", ""],
-      ["قاعدة بيانات لجان الطالبات", "", ""],
+      ["", "", "", "", "", "", "", ""],
+      ["", "", "", "", "", "", "", ""],
+      ["قاعدة بيــــانـــات لجــــــــــان الطالبـــــــــــات", "", "", "", "", "", "", ""],
       ["الرقم", "رقم الهويه", "اسم الطالبة ", "الصف", "القسم ", "رقم الجلوس", "اللجنة", "مقر اللجنة"],
       ["1", "2316856059", "الاء خلف الله حسين التجاني", "الأول الثانوي", "السنة المشتركة", "111450001", "اللجنة الأولى", "أول ثانوي [ أ ]"]
     ];
@@ -472,7 +482,6 @@
       civilIdInput = select("#civilId");
       resultCard = select("#resultCard");
 
-      // بيانات الجهة التعليمية مكتوبة ثابتة في واجهة الصفحة.
       bindEvents();
       runTests();
       loadStudents();
@@ -494,18 +503,8 @@
       setMessage("جاري تجهيز البيانات...", "");
       searchBtn.disabled = true;
 
-      if(window.location.protocol === "file:"){
-        if(loadStudentsFromJsData()){
-          return;
-        }
-
-        setMessage("لا يمكن قراءة ملف Excel مباشرة عند فتح الصفحة بالنقر من الجهاز. شغّل الصفحة عبر Live Server أو GitHub Pages ليقرأ الموقع نفس ملف st.xlsx بدون تحويل.", "danger");
-        console.warn("الصفحة تعمل عبر file://. قراءة st.xlsx تحتاج تشغيل الموقع عبر http أو https.");
-        return;
-      }
-
       if(typeof XLSX === "undefined"){
-        setMessage("تعذر تحميل مكتبة قراءة Excel. تأكد من اتصال الإنترنت أو حمّل مكتبة xlsx محلياً.", "danger");
+        setMessage("تعذر تحميل مكتبة قراءة Excel. تأكدي من اتصال الإنترنت أو ضعي مكتبة xlsx.full.min.js محليًا.", "danger");
         return;
       }
 
@@ -532,54 +531,79 @@
         }
       }
 
-      if(!loaded && loadStudentsFromJsData()){
-        return;
-      }
-
       if(!loaded){
         searchBtn.disabled = true;
-        setMessage("تعذر تجهيز البيانات من ملف st.xlsx. تأكد أن الملف بجانب index.html وأن الاسم مطابق تماماً، وأن الاستضافة تسمح بتحميل ملفات xlsx.", "danger");
+        setMessage("تعذر تجهيز بيانات الطالبات. تأكدي أن ملف Excel موجود بجانب index.html وأن اسمه st.xlsx أو st(1).xlsx.", "danger");
         console.warn("فشل تحميل ملف Excel:", lastStatus);
       }
     }
 
-    function loadStudentsFromJsData(){
-      if(!window.STUDENTS_DATA || !Array.isArray(window.STUDENTS_DATA)){
-        return false;
-      }
-
-      students = window.STUDENTS_DATA.map(mapStudent).filter(function(student){
-        return student.idNormalized;
-      });
-
-      if(students.length === 0){
-        setMessage("تم العثور على ملف st-data.js، لكن لا توجد بيانات صالحة داخله.", "danger");
-        searchBtn.disabled = true;
-        return true;
-      }
-
-      searchBtn.disabled = false;
-      setMessage("تم تجهيز البيانات من st-data.js. عدد السجلات: " + students.length + "، يمكنك الآن الاستعلام.", "success");
-      console.info("تم تحميل بيانات الاستعلام من st-data.js. عدد السجلات:", students.length);
-      return true;
-    }
-
     function parseWorkbookBuffer(buffer, sourcePath){
       var workbook = XLSX.read(buffer, {type:"array"});
-      var parsed = parseBestWorksheet(workbook);
+      var parsed = parseSchoolWorkbook(workbook);
 
       students = parsed.rows.map(mapStudent).filter(function(student){
         return student.idNormalized;
       });
 
       if(students.length === 0){
-        throw new Error("تم تحميل ملف Excel، لكن لم يتم العثور على صف عناوين صحيح أو بيانات هوية صالحة");
+        throw new Error("تم تحميل ملف Excel، لكن لم يتم العثور على بيانات هوية صالحة داخل خلايا القاعدة.");
       }
 
       searchBtn.disabled = false;
-      setMessage("تم تجهيز البيانات من " + sourcePath + ". عدد السجلات: " + students.length + "، يمكنك الآن الاستعلام.", "success");
-      console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "الورقة:", parsed.sheetName, "صف العناوين:", parsed.headerRowNumber, "عدد السجلات:", students.length);
+      setMessage("تم تجهيز البيانات. عدد السجلات: " + students.length + "، يمكنك الآن الاستعلام.", "success");
+      console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "الورقة:", parsed.sheetName, "عدد السجلات:", students.length);
       console.info("أول هوية مقروءة للتجربة:", students[0].idNormalized);
+    }
+
+    function parseSchoolWorkbook(workbook){
+      var sheetName = findSheetName(workbook, CONFIG.databaseSheetName);
+
+      if(sheetName){
+        var fixedRows = parseFixedDatabaseSheet(workbook.Sheets[sheetName], sheetName);
+        if(fixedRows.rows.length > 0){
+          return fixedRows;
+        }
+      }
+
+      return parseBestWorksheet(workbook);
+    }
+
+    function findSheetName(workbook, targetName){
+      var normalizedTarget = normalizeHeader(targetName);
+      for(var i = 0; i < workbook.SheetNames.length; i++){
+        if(normalizeHeader(workbook.SheetNames[i]) === normalizedTarget){
+          return workbook.SheetNames[i];
+        }
+      }
+      return null;
+    }
+
+    function parseFixedDatabaseSheet(sheet, sheetName){
+      var matrix = XLSX.utils.sheet_to_json(sheet, {header:1, defval:"", raw:false});
+      var rows = [];
+
+      for(var rowIndex = CONFIG.startRowIndex; rowIndex < matrix.length; rowIndex++){
+        var row = matrix[rowIndex] || [];
+        var record = {
+          "رقم الهويه": cleanValue(row[CONFIG.columnIndex.id]),
+          "اسم الطالبة": cleanValue(row[CONFIG.columnIndex.name]),
+          "الصف": cleanValue(row[CONFIG.columnIndex.grade]),
+          "القسم": cleanValue(row[CONFIG.columnIndex.section]),
+          "رقم الجلوس": cleanValue(row[CONFIG.columnIndex.seat]),
+          "اللجنة": cleanValue(row[CONFIG.columnIndex.committee]),
+          "مقر اللجنة": cleanValue(row[CONFIG.columnIndex.location])
+        };
+
+        if(record["رقم الهويه"] || record["اسم الطالبة"]){
+          rows.push(record);
+        }
+      }
+
+      return {
+        sheetName: sheetName,
+        rows: rows
+      };
     }
 
     function parseBestWorksheet(workbook){
@@ -804,7 +828,11 @@
 
       var parsedMatrix = parseRowsWithDynamicHeader(testMatrixWithTitleRows, "اختبار");
       var matrixStudent = parsedMatrix ? mapStudent(parsedMatrix.rows[0]) : null;
-      tests.push({name:"قراءة ملف Excel يبدأ بعنوان قبل صف الأعمدة", pass:!!matrixStudent && parsedMatrix.headerRowNumber === 3 && matrixStudent.idNormalized === "2316856059" && matrixStudent.name === "الاء خلف الله حسين التجاني"});
+      tests.push({name:"قراءة ملف Excel يبدأ بعنوان قبل صف الأعمدة", pass:!!matrixStudent && parsedMatrix.headerRowNumber === 4 && matrixStudent.idNormalized === "2316856059" && matrixStudent.name === "الاء خلف الله حسين التجاني"});
+
+      var fixedParsed = parseFixedDatabaseSheet({"!ref":"A1:H5", A3:{v:"قاعدة"}, A4:{v:"الرقم"}, B4:{v:"رقم الهويه"}, C4:{v:"اسم الطالبة"}, D4:{v:"الصف"}, E4:{v:"القسم"}, F4:{v:"رقم الجلوس"}, G4:{v:"اللجنة"}, H4:{v:"مقر اللجنة"}, A5:{v:"1"}, B5:{v:"8051694"}, C5:{v:"رهف حسين محمد عوض بن عوض"}, D5:{v:"الأول الثانوي"}, E5:{v:"السنة المشتركة"}, F5:{v:"111450052"}, G5:{v:"اللجنة الرابعة"}, H5:{v:"أول ثانوي [ د ]"}}, "اختبار");
+      var fixedStudent = fixedParsed.rows.length ? mapStudent(fixedParsed.rows[0]) : null;
+      tests.push({name:"قراءة الخلايا المحددة في ورقة القاعدة", pass:!!fixedStudent && fixedStudent.idNormalized === "8051694" && fixedStudent.name === "رهف حسين محمد عوض بن عوض"});
 
       var failed = tests.filter(function(test){return !test.pass});
       if(failed.length){
