@@ -425,7 +425,7 @@
   <script>
     var CONFIG = {
       schoolName: "ثانوية السيدة فاطمة الزهراء بالباحة",
-      excelPaths: ["st.xlsx", "./st.xlsx", "ST.xlsx", "./ST.xlsx"],
+      excelPaths: ["st.xlsx", "./st.xlsx", "ST.xlsx", "./ST.xlsx", "st(1).xlsx", "./st(1).xlsx"],
       dataJsFile: "st-data.js"
     };
 
@@ -448,7 +448,8 @@
     var testRows = [
       {"اسم الطالبة":"سارة محمد","رقم الهوية":"١٢٣٤٥٦٧٨٩٠","الصف":"السادس","القسم":"أ","رقم الجلوس":"15","اللجنة":"الأولى","مقر اللجنة":"الدور الأول"},
       {"الاسم":"نورة علي","السجل المدني":"2234567890","الفصل":"ب","المقر":"معمل الحاسب"},
-      {"اسم الطالب":"منى سالم","رقم السجل المدني":"0001234567","لجنة الاختبار":"اللجنة الثالثة","مكان اللجنة":"قاعة 3"}
+      {"اسم الطالب":"منى سالم","رقم السجل المدني":"0001234567","لجنة الاختبار":"اللجنة الثالثة","مكان اللجنة":"قاعة 3"},
+      {"اسم الطالبة":"رهف حسين محمد عوض بن عوض","رقم الهويه":"8051694","الصف":"الأول الثانوي","القسم":"السنة المشتركة","رقم الجلوس":"111450052","اللجنة":"اللجنة الرابعة","مقر اللجنة":"أول ثانوي [ د ]"}
     ];
 
     var testMatrixWithTitleRows = [
@@ -558,7 +559,7 @@
       }
 
       searchBtn.disabled = false;
-      setMessage("تم تجهيز البيانات، يمكنك الآن الاستعلام.", "success");
+      setMessage("تم تجهيز البيانات من st-data.js. عدد السجلات: " + students.length + "، يمكنك الآن الاستعلام.", "success");
       console.info("تم تحميل بيانات الاستعلام من st-data.js. عدد السجلات:", students.length);
       return true;
     }
@@ -576,7 +577,7 @@
       }
 
       searchBtn.disabled = false;
-      setMessage("تم تجهيز البيانات، يمكنك الآن الاستعلام.", "success");
+      setMessage("تم تجهيز البيانات من " + sourcePath + ". عدد السجلات: " + students.length + "، يمكنك الآن الاستعلام.", "success");
       console.info("تم تحميل بيانات الاستعلام من:", sourcePath, "الورقة:", parsed.sheetName, "صف العناوين:", parsed.headerRowNumber, "عدد السجلات:", students.length);
       console.info("أول هوية مقروءة للتجربة:", students[0].idNormalized);
     }
@@ -675,6 +676,7 @@
       });
 
       student.idNormalized = onlyDigits(student.id);
+      student.idSearchKey = normalizeSearchId(student.idNormalized);
       return student;
     }
 
@@ -723,6 +725,12 @@
       }).join("");
     }
 
+    function normalizeSearchId(value){
+      var digits = onlyDigits(value);
+      var withoutLeadingZeros = digits.replace(/^0+/, "");
+      return withoutLeadingZeros || "0";
+    }
+
     function setMessage(text, type){
       message.textContent = text;
       message.className = "message " + (type || "");
@@ -745,7 +753,10 @@
         return;
       }
 
-      var student = students.find(function(item){return item.idNormalized === civilId});
+      var civilIdSearchKey = normalizeSearchId(civilId);
+      var student = students.find(function(item){
+        return item.idNormalized === civilId || item.idSearchKey === civilIdSearchKey;
+      });
 
       if(!student){
         hideResult();
@@ -786,6 +797,10 @@
 
       var third = mapStudent(testRows[2]);
       tests.push({name:"قراءة رقم يبدأ بصفر", pass:third.idNormalized === "0001234567" && third.committee === "اللجنة الثالثة"});
+
+      var fourth = mapStudent(testRows[3]);
+      tests.push({name:"قراءة رقم قصير مثل ملف المدرسة", pass:fourth.idNormalized === "8051694" && fourth.seat === "111450052"});
+      tests.push({name:"مطابقة الرقم مع أصفار زائدة", pass:normalizeSearchId("0008051694") === normalizeSearchId(fourth.idNormalized)});
 
       var parsedMatrix = parseRowsWithDynamicHeader(testMatrixWithTitleRows, "اختبار");
       var matrixStudent = parsedMatrix ? mapStudent(parsedMatrix.rows[0]) : null;
